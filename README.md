@@ -49,7 +49,7 @@ This documentation for rnd_app_presentation presentation layer, a simple technic
 ```
   "ApiSettings": {
     "APIsUrl": {
-      "rnd_app": "https://192.168.1.193/rnd_app/api/"
+      "rnd_app": "https://<dns|ip>/rnd_app/api/"
     }
   }
 ```
