@@ -1,0 +1,454 @@
+﻿@using WebApp.Models.Common
+@model ProductIndexViewModel
+
+@{
+    ViewData["Title"] = "Product";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/lib/datatables/css/dataTables.bootstrap4.css" />
+    <link rel="stylesheet" href="~/lib/datatables/css/responsive/responsive.bootstrap4.css" />
+}
+
+<section class="content-header">
+    <div class="container">
+        <div class="d-flex align-items-center justify-content-between text-dark p-3">
+            <div class="m-0">
+                <h4 class="mb-0">@ViewData["Title"]</h4>
+                <small>Common</small>
+            </div>
+            <div class="m-0">
+                <button type="button" class="btn btn-primary btn-sm" @@click="addNewRecord"><i class="fa fa-plus-circle"></i> Add new</button>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="content">
+    <div class="container">
+
+        <div class="row">
+
+            <div id="alert_div" class="col-sm-12 d-none">
+            </div>
+
+            <div class="col-sm-12 col-xl-4 order-xl-2">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">Filter</h3>
+                        <div class="card-tools d-xl-none">
+                            <button type="button" class="btn btn-tool" data-card-widget="collapse">
+                                <i class="fa fa-minus"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6 col-lg-12">
+                                <div class="form-group">
+                                    <label asp-for="Name_filter"></label>
+                                    <input v-model="@Html.NameFor(model => model.Name_filter)" asp-for="Name_filter" class="form-control" />
+                                    <span asp-validation-for="Name_filter" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-6 col-lg-12">
+                                <div class="form-group">
+                                    <label asp-for="Price_filter"></label>
+                                    <input @@keypress="allowDecimal($event)" v-model="@Html.NameFor(model => model.Price_filter)" asp-for="Price_filter" class="form-control" />
+                                    <span asp-validation-for="Price_filter" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-6 col-lg-12">
+                                <div class="form-group">
+                                    <label asp-for="Quantity_filter"></label>
+                                    <input @@keypress="allowNumber($event)" v-model="@Html.NameFor(model => model.Quantity_filter)" asp-for="Quantity_filter" class="form-control" />
+                                    <span asp-validation-for="Quantity_filter" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-footer">
+                        <div class="float-right">
+                            <button v-bind:id="indexDataTableResetBtn_id" @@click="resetRecord" type="button" class="btn btn-default"><i class="fa fa-refresh"></i></button>
+                            <button v-bind:id="indexDataTableSearchBtn_id" @@click="searchRecord" type="button" class="btn btn-primary"><i class="fa fa-search"></i> Search</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-sm-12 col-xl-8 order-xl-1">
+                <div class="card">
+                    <div class="card-body p-2">
+                        <table v-bind:id="indexDataTable_id" class="table table-bordered table-hover responsive nowrap" cellspacing="0" style="width: 100%;">
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+</section>
+
+@section Scripts {
+
+    <script type="text/javascript" src="~/lib/datatables/js/jquery.dataTables.js"></script>
+    <script type="text/javascript" src="~/lib/datatables/js/dataTables.bootstrap4.js"></script>
+    <script type="text/javascript" src="~/lib/datatables/js/responsive/dataTables.responsive.js"></script>
+    <script type="text/javascript" src="~/lib/datatables/js/responsive/responsive.bootstrap4.js"></script>
+
+    <script type="text/javascript" src="~/js/miscellaneous.js"></script>
+    <script type="text/javascript" src="~/js/shared/modal.miscellaneous.js"></script>
+    <script type="text/javascript" src="~/js/shared/dataTable.miscellaneous.js"></script>
+
+    <script>
+
+        var vuem = new Vue({
+            mixins: [miscModalApp_vueMixin],
+            el: defaultEl_vue,
+            data: function () {
+                return {
+                    breadcrumbItems: [
+                        {
+                            text: 'Home',
+                            href: '#'
+                        },
+                        {
+                            text: 'Country',
+                            active: true
+                        }
+                    ],
+                    @Html.NameFor(model => model.Name_filter): '@Html.ValueFor(model => model.Name_filter)',
+                    @Html.NameFor(model => model.Price_filter): '@Html.ValueFor(model => model.Price_filter)',
+                    @Html.NameFor(model => model.Quantity_filter): '@Html.ValueFor(model => model.Quantity_filter)',
+                    indexDataTableSearchBtn_id: 'index_dt_search_input',
+                    indexDataTableResetBtn_id: 'index_dt_reset_input',
+                    indexDataTable_id: 'index_datatable',
+                    indexDataTable: null
+                };
+            },
+            methods: {
+                addNewRecord: function () {
+                    var self = this;
+
+                    http.get('@Url.Action("_Add", "Product")', {
+                        params: {}
+                    }).then(function (response) {
+                        if(response.data.result == "@Abstraction.GenericModels.ConstantValue.JsonResult.Success.ToString()"){
+                            defaultModal.$call(response.data.partialView);
+                            $(miscModalApp_vueMixin.data().defaultModal_id.$idIndicator()).fnValidateDynamicContent();
+                        } else if (response.data.result == "@Abstraction.GenericModels.ConstantValue.JsonResult.TokenExpired.ToString()") {
+                            window.location.href = '@Url.Action("Index", "Account")';
+                        } else {
+                            $(("alert_div").$idIndicator()).removeClass("d-none").html(
+                                '<div class="alert alert-warning alert-dismissible">' +
+                                '<button type="button" class="close" data-dismiss="alert">&times;</button>' +
+                                '<strong>Uh-oh!</strong> Something not right. Please contact system administrator.' +
+                                '</div>'
+                            );
+                        }
+                    }, function (error) {
+                        console.log(error);
+                    });
+                },
+                allowNumber: function(event) { 
+                    if (/[^0-9]/.test(event.key)) { event.preventDefault() } 
+                },
+                allowDecimal: function(event) { 
+                    if (/[^.0-9]/.test(event.key)) { event.preventDefault() } 
+                },
+                resetRecord: function() {
+                    var self = this, $thisDT = self.indexDataTable;
+                    self.@Html.NameFor(model => model.Name_filter) = "";
+                    self.@Html.NameFor(model => model.Price_filter) = "";
+                    self.@Html.NameFor(model => model.Quantity_filter) = "";
+                    $thisDT.search("");
+                    $thisDT.columns().every(function () {
+                        this.search("");
+                    });
+                    $thisDT.ajax.reload(null, true);
+                },
+                searchRecord: function() {
+                    var self = this, $thisDT = self.indexDataTable, indSearchVal = {
+                        "1": self.@Html.NameFor(model => model.Name_filter),
+                        "3": self.@Html.NameFor(model => model.Price_filter),
+                        "4": self.@Html.NameFor(model => model.Quantity_filter)
+                    };
+
+                    $thisDT.columns().every(function (index) {
+                        if (indSearchVal.hasOwnProperty(index.toString()))
+                            this.search(indSearchVal[index.toString()]);
+                    });
+
+                    $thisDT.search("");
+                    $thisDT.ajax.reload(null, true);
+                }
+            },
+            created: function () {
+                var self = this;
+            },
+            mounted: function () {
+                var self = this;
+
+                self.indexDataTable = $(self.indexDataTable_id.$idIndicator()).DataTable({
+                    select: true,
+                    processing: true,
+                    serverSide: true,
+                    searching: true,
+                    responsive: true,
+                    ajax: {
+                        type: "POST",
+                        url: "@Url.Action("_ProcessTable", "Product")",
+                        dataType: "json",
+                        data: {},
+                        dataSrc: function (srcData) {
+                            if(srcData.result == "@Abstraction.GenericModels.ConstantValue.JsonResult.Success.ToString()") {
+                                if (srcData.values != null) {
+                                    srcData.draw = srcData.values.draw;
+                                    srcData.recordsTotal = srcData.values.recordsTotal;
+                                    srcData.recordsFiltered = srcData.values.recordsFiltered;
+                                    return srcData.values.data;
+                                }
+                            } else if (srcData.result == "@Abstraction.GenericModels.ConstantValue.JsonResult.TokenExpired.ToString()") {
+                                window.location.href = '@Url.Action("Index", "Account")';
+                            } else {
+                                srcData.draw = 0;
+                                srcData.recordsTotal = 0;
+                                srcData.recordsFiltered = 0;
+                                return srcData.values;
+                            }
+                        },
+                        error: function (xhr, ajaxOptions, thrownError) {
+                            console.log(thrownError);
+                        }
+                    },
+                    columns: [
+                        {
+                            title: "No",
+                            name: "@nameof(DT_productViewModel.SeqNo)",
+                            data: "@nameof(DT_productViewModel.SeqNo)",
+                            class: "text-center",
+                            searchable: false,
+                            orderable: false
+                        },
+                        {
+                            title: "Name",
+                            name: "@nameof(DT_productViewModel.Name)",
+                            data: "@nameof(DT_productViewModel.Name)",
+                        },
+                        {
+                            title: "Description",
+                            name: "@nameof(DT_productViewModel.Description)",
+                            data: "@nameof(DT_productViewModel.Description)",
+                        },
+                        {
+                            title: "Price",
+                            name: "@nameof(DT_productViewModel.Price)",
+                            data: "@nameof(DT_productViewModel.Price)",
+                        },
+                        {
+                            title: "Quantity",
+                            name: "@nameof(DT_productViewModel.Quantity)",
+                            data: "@nameof(DT_productViewModel.Quantity)",
+                        },
+                        {
+                            title: "Status",
+                            name: "@nameof(DT_productViewModel.IsActive)",
+                            data: "@nameof(DT_productViewModel.IsActive)",
+                        },
+                        {
+                            title: "Action",
+                            name: "@nameof(DT_productViewModel.ActionBtn)",
+                            data: "@nameof(DT_productViewModel.ActionBtn)",
+                            class: "text-center",
+                            searchable: false,
+                            orderable: false,
+                            defaultContent: "No action on this time."
+                        }
+                    ],
+                    order: [],
+                    language: {
+                        emptyTable: "No entries to show"
+                    },
+                    columnDefs: [
+                        { responsivePriority: 1, targets: 0 },
+                        { responsivePriority: 2, targets: 1 },
+                        { responsivePriority: 3, targets: 3 }
+                    ],
+                    initComplete: function () {
+                        var thisDt = this.api();
+
+                        //$(document).on("click", self.indexDataTableSearchBtn_id.$idIndicator(), function () {
+                        //    var $this = $(this);
+                        //    SearchIndividual_dt({
+                        //        "1": self.@Html.NameFor(model => model.Name_filter),
+                        //        "3": self.@Html.NameFor(model => model.Price_filter),
+                        //        "4": self.@Html.NameFor(model => model.Quantity_filter)
+                        //    }, thisDt);
+                        //});
+
+                        //$(document).on("click", self.indexDataTableResetBtn_id.$idIndicator(), function () {
+                        //    var $this = $(this);
+                        //    self.@Html.NameFor(model => model.Name_filter) = "";
+                        //    self.@Html.NameFor(model => model.Price_filter) = "";
+                        //    self.@Html.NameFor(model => model.Quantity_filter) = "";
+                        //    thisDt.search("");
+                        //    thisDt.columns().every(function () {
+                        //        this.search("");
+                        //    });
+                        //});
+                    }
+                });
+            }
+        });
+
+        var SearchIndividual_dt = function (values, dtTable) {
+            dtTable.columns().every(function (index) {
+                if (values.hasOwnProperty(index.toString()))
+                    this.search(values[index.toString()]);
+            });
+
+            dtTable.search("atest");
+            dtTable.ajax.reload(null, true);
+        }
+
+        var _AddSuccess = function (data, status, xhr) {
+            if(data.result == "@Abstraction.GenericModels.ConstantValue.JsonResult.Success.ToString()") {
+                defaultModal.$remove();
+                vuem.$data.indexDataTable.ajax.reload();
+                $(("alert_div").$idIndicator()).removeClass("d-none").html(
+                    '<div class="alert alert-success alert-dismissible">' +
+                        '<button type="button" class="close" data-dismiss="alert">&times;</button>' +
+                        '<strong>Success!</strong> Add successful.' +
+                    '</div>'
+                );
+            } else if (data.result == "@Abstraction.GenericModels.ConstantValue.JsonResult.ModelStateInvalid.ToString()") {
+                $(miscModalApp_vueMixin.data().defaultModal_id.$idIndicator()).find(("modal_add_alert_div").$idIndicator()).removeClass("d-none").html(
+                    '<div class="alert alert-info alert-dismissible">' +
+                        '<button type="button" class="close" data-dismiss="alert">&times;</button>' +
+                        '<strong>Invalid!</strong> Please fill in the form correctly.' +
+                    '</div>'
+                );
+            } else if (data.result == "@Abstraction.GenericModels.ConstantValue.JsonResult.TokenExpired.ToString()") {
+                window.location.href = '@Url.Action("Index", "Account")';
+            } else {
+                defaultModal.$remove();
+                $(("alert_div").$idIndicator()).removeClass("d-none").html(
+                    '<div class="alert alert-info alert-dismissible">' +
+                        '<button type="button" class="close" data-dismiss="alert">&times;</button>' +
+                        '<strong>Fail!</strong> Add fail, Please try again or contact our administrator.' +
+                    '</div>'
+                );
+            }
+        }, _AddFailure = function (xhr, status, error) {
+            console.log(xhr);
+            console.log(status);
+            console.log(error);
+            $(("alert_div").$idIndicator()).removeClass("d-none").html(
+                '<div class="alert alert-warning alert-dismissible">' +
+                    '<button type="button" class="close" data-dismiss="alert">&times;</button>' +
+                    '<strong>Uh-oh!</strong> Something not right. Please contact system administrator.' +
+                '</div>'
+            );
+        };
+
+        var _UpdateFormSuccess = function(data, status, xhr) {
+            if(data.result == "@Abstraction.GenericModels.ConstantValue.JsonResult.Success.ToString()") {
+                defaultModal.$call(data.partialView);
+                $(miscModalApp_vueMixin.data().defaultModal_id.$idIndicator()).fnValidateDynamicContent();
+            } else if (data.result == "@Abstraction.GenericModels.ConstantValue.JsonResult.TokenExpired.ToString()") {
+                window.location.href = '@Url.Action("Index", "Account")';
+            } else {
+                $(("alert_div").$idIndicator()).removeClass("d-none").html(
+                    '<div class="alert alert-info alert-dismissible">' +
+                        '<button type="button" class="close" data-dismiss="alert">&times;</button>' +
+                        '<strong>Info!</strong> Please try again or contact our administrator.' +
+                    '</div>'
+                );
+            }
+        }, _UpdateFormFailure = function(xhr, status, error) {
+            console.log(xhr);
+            console.log(status);
+            console.log(error);
+            $(("alert_div").$idIndicator()).removeClass("d-none").html(
+                '<div class="alert alert-warning alert-dismissible">' +
+                    '<button type="button" class="close" data-dismiss="alert">&times;</button>' +
+                    '<strong>Uh-oh!</strong> Something not right. Please contact system administrator.' +
+                '</div>'
+            );
+        };
+
+        var _UpdateSuccess = function(data, status, xhr) {
+            if(data.result == "@Abstraction.GenericModels.ConstantValue.JsonResult.Success.ToString()") {
+                defaultModal.$remove();
+                vuem.$data.indexDataTable.ajax.reload();
+                $(("alert_div").$idIndicator()).removeClass("d-none").html(
+                    '<div class="alert alert-success alert-dismissible">' +
+                        '<button type="button" class="close" data-dismiss="alert">&times;</button>' +
+                        '<strong>Success!</strong> Updated successful.' +
+                    '</div>'
+                );
+            } else if (data.result == "@Abstraction.GenericModels.ConstantValue.JsonResult.TokenExpired.ToString()") {
+                window.location.href = '@Url.Action("Index", "Account")';
+            } else if (data.result == "@Abstraction.GenericModels.ConstantValue.JsonResult.ModelStateInvalid.ToString()") {
+                $(miscModalApp_vueMixin.data().defaultModal_id.$idIndicator()).find(("modal_update_alert_div").$idIndicator()).removeClass("d-none").html(
+                    '<div class="alert alert-info alert-dismissible">' +
+                        '<button type="button" class="close" data-dismiss="alert">&times;</button>' +
+                        '<strong>Invalid!</strong> Please fill in the form correctly.' +
+                    '</div>'
+                );
+            } else {
+                defaultModal.$remove();
+                $(("alert_div").$idIndicator()).removeClass("d-none").html(
+                    '<div class="alert alert-info alert-dismissible">' +
+                        '<button type="button" class="close" data-dismiss="alert">&times;</button>' +
+                        '<strong>Fail!</strong> Update fail, Please try again or contact our administrator.' +
+                    '</div>'
+                );
+            }
+        }, _UpdateFailure = function(xhr, status, error) {
+            console.log(xhr);
+            console.log(status);
+            console.log(error);
+            $(("alert_div").$idIndicator()).removeClass("d-none").html(
+                '<div class="alert alert-warning alert-dismissible">' +
+                    '<button type="button" class="close" data-dismiss="alert">&times;</button>' +
+                    '<strong>Uh-oh!</strong> Something not right. Please contact system administrator.' +
+                '</div>'
+            );
+        };
+
+        var _DeleteSuccess = function (data, status, xhr) {
+            if(data.result == "@Abstraction.GenericModels.ConstantValue.JsonResult.Success.ToString()") {
+                vuem.$data.indexDataTable.ajax.reload();
+                $(("alert_div").$idIndicator()).removeClass("d-none").html(
+                    '<div class="alert alert-success alert-dismissible">' +
+                        '<button type="button" class="close" data-dismiss="alert">&times;</button>' +
+                        '<strong>Success!</strong> Delete successful.' +
+                    '</div>'
+                );
+            } else if (data.result == "@Abstraction.GenericModels.ConstantValue.JsonResult.TokenExpired.ToString()") {
+                window.location.href = '@Url.Action("Index", "Account")';
+            } else {
+                $(("alert_div").$idIndicator()).removeClass("d-none").html(
+                    '<div class="alert alert-info alert-dismissible">' +
+                        '<button type="button" class="close" data-dismiss="alert">&times;</button>' +
+                        '<strong>Fail!</strong> Delete fail, Please try again or contact our administrator.' +
+                    '</div>'
+                );
+            }
+        }, _DeleteFailure = function (xhr, status, error) {
+            console.log(xhr);
+            console.log(status);
+            console.log(error);
+            $(("alert_div").$idIndicator()).removeClass("d-none").html(
+                '<div class="alert alert-warning alert-dismissible">' +
+                    '<button type="button" class="close" data-dismiss="alert">&times;</button>' +
+                    '<strong>Uh-oh!</strong> Something not right. Please contact system administrator.' +
+                '</div>'
+            );
+        };
+
+    </script>
+
+}

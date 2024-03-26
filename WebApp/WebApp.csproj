@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Frame\Resources\Abstraction\Abstraction.csproj" />
+    <ProjectReference Include="..\Frame\Resources\Integrate\Integrate.csproj" />
+    <ProjectReference Include="..\Frame\Structures\Structures.csproj" />
+    <ProjectReference Include="..\Frame\Tools\Tools.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="appData\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="BeginCollectionItemCore" Version="1.1.0" />
+    <PackageReference Include="JWT" Version="10.0.2" />
+    <PackageReference Include="RestSharp" Version="110.2.0" />
+    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="6.30.0" />
+  </ItemGroup>
+
+</Project>

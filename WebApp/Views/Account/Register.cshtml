@@ -1,0 +1,139 @@
+﻿@using WebApp.Models.Membership
+@model AccountRegisterViewModel
+
+@{
+    ViewData["title"] = "Register";
+}
+
+@section Styles {
+
+
+
+}
+
+<section class="register-page">
+
+    <div class="register-box">
+
+        <div class="card">
+            <div class="card-body register-card-body">
+                <p class="login-box-msg">You are only one step to become our member! Sign up now.</p>
+
+                <div class="row">
+                    <div class="col">
+                        @if (TempData["Message"] != null)
+                        {
+                            <div class="alert alert-info alert-dismissible">
+                                <button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button>
+                                @TempData["Message"]
+                            </div>
+                        }
+
+                        @if (TempData["ErrorMessage"] != null)
+                        {
+                            <div class="alert alert-warning alert-dismissible">
+                                <button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button>
+                                @TempData["ErrorMessage"]
+                            </div>
+                        }
+                    </div>
+                </div>
+
+                <form asp-controller="Account" asp-action="Register" asp-route-returnUrl="@ViewData["ReturnUrl"]" method="post">
+                    <div class="row">
+                        <div class="col">
+                            <div class="form-group">
+                                <div class="input-group">
+                                    <input v-model="v_@Html.NameFor(model => model.Name)" asp-for="Name" class="form-control" placeholder="@Html.DisplayNameFor(model => model.Name)" />
+                                    <div class="input-group-append">
+                                        <div class="input-group-text">
+                                            <span class="fa fa-user"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <span asp-validation-for="Name" class="text-danger text-sm"></span>
+                            </div>
+                            <div class="form-group">
+                                <div class="input-group">
+                                    <input v-model="v_@Html.NameFor(model => model.Email)" asp-for="Email" class="form-control" placeholder="@Html.DisplayNameFor(model => model.Email)" />
+                                    <div class="input-group-append">
+                                        <div class="input-group-text">
+                                            <span class="fa fa-envelope"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <span asp-validation-for="Email" class="text-danger text-sm"></span>
+                            </div>
+                            <div class="form-group">
+                                <div class="input-group">
+                                    <input v-model="v_@Html.NameFor(model => model.Password)" asp-for="Password" class="form-control" placeholder="@Html.DisplayNameFor(model => model.Password)" />
+                                    <div class="input-group-append">
+                                        <div class="input-group-text">
+                                            <span class="fa fa-lock"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <span asp-validation-for="Password" class="text-danger text-sm"></span>
+                            </div>
+                            <div class="form-group">
+                                <div class="input-group">
+                                    <input v-model="v_@Html.NameFor(model => model.ConfirmPassword)" asp-for="ConfirmPassword" class="form-control" placeholder="@Html.DisplayNameFor(model => model.ConfirmPassword)" />
+                                    <div class="input-group-append">
+                                        <div class="input-group-text">
+                                            <span class="fa fa-check"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <span asp-validation-for="ConfirmPassword" class="text-danger text-sm"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col">
+                            <div class="mt-4 mb-0">
+                                <button type="submit" class="btn btn-primary btn-block">Sign Up</button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+
+            </div>
+            <div class="card-footer">
+                <div class="text-center justify-content-center">
+                    <a href="@Url.Action("Login", "Account")">Have an account? Login now!</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</section>
+
+@section Scripts {
+
+    <script type="text/javascript" src="~/js/miscellaneous.js"></script>
+
+    <script>
+
+        var vuem = new Vue({
+            el: defaultEl_vue,
+            data: function () {
+                return {
+                    v_@Html.NameFor(model => model.Name): '@Html.ValueFor(model => model.Name)',
+                    v_@Html.NameFor(model => model.Email): '@Html.ValueFor(model => model.Email)',
+                    v_@Html.NameFor(model => model.Password): '',
+                    v_@Html.NameFor(model => model.ConfirmPassword): ''
+                };
+            },
+            methods: {
+                
+            },
+            created: function () {
+            },
+            mounted: function () {
+            }
+        });
+
+    </script>
+
+}
